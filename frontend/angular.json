@@ -84,12 +84,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "intelliinspect-frontend:build"
+          },
           "configurations": {
             "production": {
-              "browserTarget": "intelliinspect-frontend:build:production"
+              "buildTarget": "intelliinspect-frontend:build:production"
             },
             "development": {
-              "browserTarget": "intelliinspect-frontend:build:development"
+              "buildTarget": "intelliinspect-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -97,7 +100,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "intelliinspect-frontend:build"
+            "buildTarget": "intelliinspect-frontend:build"
           }
         },
         "test": {

@@ -6,13 +6,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4200:4200"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules
     depends_on:
       - backend-dotnet
     environment:
-      - API_BASE_URL=http://localhost:5000
+      - API_BASE_URL=http://localhost:8080
     networks:
       - intelliinspect-network
 
@@ -21,15 +21,15 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "8080:8080"
     volumes:
-      - ./backend:/app
       - ./data:/app/data
     depends_on:
       - ml-service-python
     environment:
       - ML_SERVICE_URL=http://ml-service-python:8000
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
     networks:
       - intelliinspect-network
 
