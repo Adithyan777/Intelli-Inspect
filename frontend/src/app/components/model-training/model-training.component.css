@@ -1,0 +1,195 @@
+.training-container {
+  padding: 2rem 0;
+}
+
+.card {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.card-header {
+  border: none;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-header h4 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.training-status {
+  padding: 2rem;
+}
+
+.status-icon {
+  color: #667eea;
+}
+
+.progress-circle {
+  display: flex;
+  justify-content: center;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  background: #e5e7eb;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+}
+
+.accuracy-card {
+  border-color: #10b981;
+}
+
+.accuracy-card:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+}
+
+.precision-card {
+  border-color: #3b82f6;
+}
+
+.precision-card:hover {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.recall-card {
+  border-color: #f59e0b;
+}
+
+.recall-card:hover {
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+}
+
+.f1-card {
+  border-color: #8b5cf6;
+}
+
+.f1-card:hover {
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.2);
+}
+
+.metric-icon {
+  background: #f3f4f6;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  transition: all 0.3s ease;
+}
+
+.accuracy-card .metric-icon {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.precision-card .metric-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.recall-card .metric-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.f1-card .metric-icon {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.metric-icon i {
+  font-size: 1.5rem;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+}
+
+.metric-label {
+  margin: 0;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+}
+
+.chart-title {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.chart-container {
+  height: 300px;
+  position: relative;
+}
+
+.btn-lg {
+  padding: 0.875rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+@media (max-width: 768px) {
+  .metric-card {
+    margin-bottom: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+}
