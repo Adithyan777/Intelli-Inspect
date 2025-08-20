@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { Chart } from 'chart.js';
 import { interval, Subscription } from 'rxjs';
 
@@ -25,7 +26,7 @@ interface SimulationStats {
 @Component({
   selector: 'app-simulation',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HttpClientModule],
   template: `
     <div class="simulation-container">
       <div class="row justify-content-center">

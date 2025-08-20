@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
 import { HttpClient, HttpEventType, HttpResponse } from '@angular/common/http';
 
 interface DatasetMetadata {
@@ -18,7 +19,7 @@ interface DatasetMetadata {
 @Component({
   selector: 'app-upload-dataset',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   template: `
     <div class="upload-container">
       <div class="row justify-content-center">

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
+
 
 interface DateRange {
   start: string;
@@ -26,7 +28,7 @@ interface DateRangeValidation {
 @Component({
   selector: 'app-date-ranges',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   template: `
     <div class="date-ranges-container">
       <div class="row justify-content-center">

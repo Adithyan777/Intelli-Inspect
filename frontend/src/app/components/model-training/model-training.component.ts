@@ -2,6 +2,8 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
+
 import { Chart, ChartConfiguration, ChartType } from 'chart.js';
 
 interface TrainingMetrics {
@@ -23,7 +25,7 @@ interface TrainingMetrics {
 @Component({
   selector: 'app-model-training',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HttpClientModule],
   template: `
     <div class="training-container">
       <div class="row justify-content-center">
