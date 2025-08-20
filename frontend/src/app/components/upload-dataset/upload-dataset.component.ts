@@ -174,7 +174,7 @@ export class UploadDatasetComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', file);
 
-    this.http.post('http://localhost:5000/api/dataset/upload', formData, {
+    this.http.post('http://localhost:8080/api/dataset/upload', formData, {
       reportProgress: true,
       observe: 'events'
     }).subscribe({

@@ -201,7 +201,7 @@ export class ModelTrainingComponent implements OnInit, AfterViewInit {
 
     const payload = JSON.parse(dateRanges);
     
-    this.http.post<TrainingMetrics>('http://localhost:5000/api/model/train', payload)
+    this.http.post<TrainingMetrics>('http://localhost:8080/api/model/train', payload)
       .subscribe({
         next: (metrics) => {
           this.trainingMetrics = metrics;

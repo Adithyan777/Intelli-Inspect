@@ -275,7 +275,7 @@ export class SimulationComponent implements OnInit, OnDestroy {
     const payload = JSON.parse(dateRanges);
     
     // Get simulation period data count
-    this.http.post<{ totalRecords: number }>('http://localhost:5000/api/simulation/get-count', payload)
+    this.http.post<{ totalRecords: number }>('http://localhost:8080/api/simulation/get-count', payload)
       .subscribe({
         next: (response) => {
           this.totalRecords = response.totalRecords;
@@ -301,7 +301,7 @@ export class SimulationComponent implements OnInit, OnDestroy {
   }
 
   private processNextPrediction(payload: any): void {
-    this.http.post<PredictionResult>('http://localhost:5000/api/simulation/predict-next', payload)
+    this.http.post<PredictionResult>('http://localhost:8080/api/simulation/predict-next', payload)
       .subscribe({
         next: (prediction) => {
           this.predictionStream.unshift(prediction);

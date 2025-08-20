@@ -12,7 +12,7 @@ services:
     depends_on:
       - backend-dotnet
     environment:
-      - API_BASE_URL=http://localhost:5000
+      - API_BASE_URL=http://localhost:8080
     networks:
       - intelliinspect-network
 
@@ -21,7 +21,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "8080:8080"
     volumes:
       - ./data:/app/data
     depends_on:

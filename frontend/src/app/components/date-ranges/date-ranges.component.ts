@@ -281,7 +281,7 @@ export class DateRangesComponent implements OnInit {
       simulationPeriod: this.simulationPeriod
     };
 
-    this.http.post<DateRangeValidation>('http://localhost:5000/api/dataset/validate-ranges', payload)
+    this.http.post<DateRangeValidation>('http://localhost:8080/api/dataset/validate-ranges', payload)
       .subscribe({
         next: (result) => {
           this.validationResult = result;

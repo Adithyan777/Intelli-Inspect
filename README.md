@@ -40,9 +40,9 @@ The application consists of three main components:
 
 3. **Access the application**
    - Frontend: http://localhost:4200
-   - Backend API: http://localhost:5000
+   - Backend API: http://localhost:8080
    - ML Service: http://localhost:8000
-   - Swagger Documentation: http://localhost:5000/swagger
+   - Swagger Documentation: http://localhost:8080/swagger
 
 ## Local Development Setup
 
@@ -144,20 +144,20 @@ The ML service uses:
 ## Docker Services
 
 - **frontend-angular**: Angular application on port 4200
-- **backend-dotnet**: .NET API on port 5000
+- **backend-dotnet**: .NET API on port 8080
 - **ml-service-python**: Python ML service on port 8000
 
 ## Environment Variables
 
 - `ML_SERVICE_URL`: URL for the ML service (default: http://localhost:8000)
 - `ASPNETCORE_ENVIRONMENT`: .NET environment (default: Development)
-- `API_BASE_URL`: Frontend API base URL (default: http://localhost:5000)
+- `API_BASE_URL`: Frontend API base URL (default: http://localhost:8080)
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Port conflicts**: Ensure ports 4200, 5000, and 8000 are available
+1. **Port conflicts**: Ensure ports 4200, 8080, and 8000 are available
 2. **Docker build failures**: Check Docker has sufficient memory and disk space
 3. **CORS errors**: Verify backend CORS configuration matches frontend URL
 4. **ML service connection**: Check ML_SERVICE_URL environment variable
