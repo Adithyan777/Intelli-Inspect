@@ -4,7 +4,7 @@
   "description": "IntelliInspect Frontend - Real-Time Predictive Quality Control",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --project intelliinspect-frontend --host 0.0.0.0 --port 4200",
+    "start": "ng serve --project intelliinspect-frontend --host 0.0.0.0 --port 4200 --poll=2000",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
