@@ -101,6 +101,11 @@ public class DatasetService : IDatasetService
         return _dataset.Count(record => IsInRange(record, dateRange));
     }
 
+    public async Task<List<dynamic>> GetRecordsInRangeAsync(DateRange dateRange)
+    {
+        return _dataset.Where(record => IsInRange(record, dateRange)).ToList();
+    }
+
     private bool HasTimestampColumn()
     {
         if (!_dataset.Any()) return false;

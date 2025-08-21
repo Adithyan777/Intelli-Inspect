@@ -8,4 +8,5 @@ public interface IDatasetService
     Task<DateRangeValidation> ValidateDateRangesAsync(DateRangeRequest request);
     Task<List<MonthlyBreakdown>> GetMonthlyBreakdownAsync(DateRangeRequest request);
     Task<int> GetRecordCountInRangeAsync(DateRange dateRange);
+    Task<List<dynamic>> GetRecordsInRangeAsync(DateRange dateRange);
 }

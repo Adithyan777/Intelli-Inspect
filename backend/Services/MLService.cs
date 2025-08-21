@@ -7,11 +7,13 @@ namespace IntelliInspect.API.Services;
 public class MLService : IMLService
 {
     private readonly HttpClient _httpClient;
+    private readonly IDatasetService _datasetService;
     private readonly ILogger<MLService> _logger;
 
-    public MLService(HttpClient httpClient, ILogger<MLService> logger)
+    public MLService(HttpClient httpClient, IDatasetService datasetService, ILogger<MLService> logger)
     {
         _httpClient = httpClient;
+        _datasetService = datasetService;
         _logger = logger;
     }
 
@@ -19,7 +21,33 @@ public class MLService : IMLService
     {
         try
         {
-            var json = JsonSerializer.Serialize(request);
+            // Get actual dataset records for training and testing periods
+            var trainingRecords = await _datasetService.GetRecordsInRangeAsync(request.TrainingPeriod);
+            var testingRecords = await _datasetService.GetRecordsInRangeAsync(request.TestingPeriod);
+            
+            _logger.LogInformation($"Retrieved {trainingRecords.Count} training records and {testingRecords.Count} testing records");
+            
+            // Convert dynamic records to dictionaries for JSON serialization
+            var trainingData = trainingRecords.Select(record => 
+                ((IDictionary<string, object>)record).ToDictionary(kv => kv.Key, kv => kv.Value)
+            ).ToList();
+            
+            var testingData = testingRecords.Select(record => 
+                ((IDictionary<string, object>)record).ToDictionary(kv => kv.Key, kv => kv.Value)
+            ).ToList();
+            
+            // Create the enhanced training request with actual data
+            var enhancedRequest = new TrainingRequest
+            {
+                TrainingPeriod = request.TrainingPeriod,
+                TestingPeriod = request.TestingPeriod,
+                TrainingData = trainingData,
+                TestingData = testingData
+            };
+            
+            _logger.LogInformation($"Sending training request with {trainingData.Count} training records and {testingData.Count} testing records");
+            
+            var json = JsonSerializer.Serialize(enhancedRequest);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync("/train", content);
@@ -50,7 +78,24 @@ public class MLService : IMLService
     {
         try
         {
-            var json = JsonSerializer.Serialize(request);
+            // Get actual simulation data for the period
+            var simulationRecords = await _datasetService.GetRecordsInRangeAsync(request.SimulationPeriod);
+            
+            _logger.LogInformation($"Retrieved {simulationRecords.Count} simulation records");
+            
+            // Convert dynamic records to dictionaries for JSON serialization
+            var simulationData = simulationRecords.Select(record => 
+                ((IDictionary<string, object>)record).ToDictionary(kv => kv.Key, kv => kv.Value)
+            ).ToList();
+            
+            // Create the enhanced simulation request with actual data
+            var enhancedRequest = new SimulationRequest
+            {
+                SimulationPeriod = request.SimulationPeriod,
+                SimulationData = simulationData
+            };
+            
+            var json = JsonSerializer.Serialize(enhancedRequest);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync("/predict-next", content);
@@ -80,7 +125,24 @@ public class MLService : IMLService
     {
         try
         {
-            var json = JsonSerializer.Serialize(request);
+            // Get actual simulation data for the period
+            var simulationRecords = await _datasetService.GetRecordsInRangeAsync(request.SimulationPeriod);
+            
+            _logger.LogInformation($"Retrieved {simulationRecords.Count} simulation records for count");
+            
+            // Convert dynamic records to dictionaries for JSON serialization
+            var simulationData = simulationRecords.Select(record => 
+                ((IDictionary<string, object>)record).ToDictionary(kv => kv.Key, kv => kv.Value)
+            ).ToList();
+            
+            // Create the enhanced simulation request with actual data
+            var enhancedRequest = new SimulationRequest
+            {
+                SimulationPeriod = request.SimulationPeriod,
+                SimulationData = simulationData
+            };
+            
+            var json = JsonSerializer.Serialize(enhancedRequest);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync("/simulation-count", content);

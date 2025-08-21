@@ -57,6 +57,12 @@ public class TrainingRequest
     
     [JsonPropertyName("testingPeriod")]
     public DateRange TestingPeriod { get; set; } = new();
+    
+    [JsonPropertyName("trainingData")]
+    public List<Dictionary<string, object>> TrainingData { get; set; } = new();
+    
+    [JsonPropertyName("testingData")]
+    public List<Dictionary<string, object>> TestingData { get; set; } = new();
 }
 
 public class TrainingMetrics
@@ -105,6 +111,9 @@ public class SimulationRequest
 {
     [JsonPropertyName("simulationPeriod")]
     public DateRange SimulationPeriod { get; set; } = new();
+    
+    [JsonPropertyName("simulationData")]
+    public List<Dictionary<string, object>> SimulationData { get; set; } = new();
 }
 
 public class PredictionResult

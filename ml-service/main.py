@@ -32,6 +32,7 @@ trained_model = None
 training_data = None
 testing_data = None
 simulation_data = None
+simulation_index = 0  # Track current position in simulation data
 feature_columns = None
 
 # Pydantic models for request/response
@@ -39,9 +40,19 @@ class DateRange(BaseModel):
     start: str
     end: str
 
+class DatasetRecord(BaseModel):
+    """A single record from the dataset"""
+    timestamp: Optional[str] = None
+    synthetic_timestamp: Optional[str] = None
+    response: Optional[int] = None
+    # Additional fields can be added dynamically
+    additional_fields: Optional[dict] = {}
+
 class TrainingRequest(BaseModel):
     trainingPeriod: DateRange
     testingPeriod: DateRange
+    trainingData: Optional[List[dict]] = []
+    testingData: Optional[List[dict]] = []
 
 class TrainingMetrics(BaseModel):
     accuracy: float
@@ -55,6 +66,7 @@ class TrainingMetrics(BaseModel):
 
 class SimulationRequest(BaseModel):
     simulationPeriod: DateRange
+    simulationData: Optional[List[dict]] = []
 
 class PredictionResult(BaseModel):
     timestamp: str
@@ -80,15 +92,42 @@ async def train_model(request: TrainingRequest):
     try:
         logger.info(f"Training model with training period: {request.trainingPeriod.start} to {request.trainingPeriod.end}")
         
-        # For demo purposes, we'll generate synthetic data
-        # In a real implementation, you would load data from your dataset service
-        training_data, testing_data, feature_columns = generate_synthetic_data()
+        # Debug: Log what we received
+        logger.info(f"Received request data:")
+        logger.info(f"  - trainingData exists: {hasattr(request, 'trainingData')}")
+        logger.info(f"  - testingData exists: {hasattr(request, 'testingData')}")
+        if hasattr(request, 'trainingData'):
+            logger.info(f"  - trainingData length: {len(request.trainingData) if request.trainingData else 0}")
+        if hasattr(request, 'testingData'):
+            logger.info(f"  - testingData length: {len(request.testingData) if request.testingData else 0}")
+        
+        # Check if real data is provided
+        if hasattr(request, 'trainingData') and hasattr(request, 'testingData') and request.trainingData and len(request.trainingData) > 0:
+            # We have training data, check if we also have testing data
+            if request.testingData and len(request.testingData) > 0:
+                logger.info(f"Using real dataset - Training records: {len(request.trainingData)}, Testing records: {len(request.testingData)}")
+                training_data, testing_data, feature_columns = process_real_data(request.trainingData, request.testingData)
+            else:
+                logger.info(f"Using real training data ({len(request.trainingData)} records) and splitting for testing since no separate testing data provided")
+                # Use training data for both, then split it
+                training_data_full, _, feature_columns = process_real_data(request.trainingData, request.trainingData)
+                # Split the training data into train/test
+                from sklearn.model_selection import train_test_split
+                training_data, testing_data = train_test_split(training_data_full, test_size=0.3, random_state=42, stratify=training_data_full['Response'])
+        else:
+            logger.warning("No real data provided, falling back to synthetic data generation")
+            # For demo purposes, we'll generate synthetic data
+            # In a real implementation, you would load data from your dataset service
+            training_data, testing_data, feature_columns = generate_synthetic_data()
         
         # Prepare features and target
         X_train = training_data[feature_columns]
         y_train = training_data['Response']
         X_test = testing_data[feature_columns]
         y_test = testing_data['Response']
+        
+        logger.info(f"Training with {len(X_train)} training samples and {len(X_test)} testing samples")
+        logger.info(f"Feature columns: {feature_columns}")
         
         # Train Random Forest model
         model = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -156,9 +195,14 @@ async def get_simulation_count(request: SimulationRequest):
     try:
         logger.info(f"Getting simulation count for period: {request.simulationPeriod.start} to {request.simulationPeriod.end}")
         
-        # For demo purposes, return a fixed count
-        # In real implementation, you would query your dataset service
-        count = 1000
+        # Check if real simulation data is provided
+        if hasattr(request, 'simulationData') and request.simulationData and len(request.simulationData) > 0:
+            count = len(request.simulationData)
+            logger.info(f"Using real simulation data: {count} records")
+        else:
+            # Fallback to demo count if no real data provided
+            logger.warning("No real simulation data provided, returning demo count")
+            count = 1000
         
         logger.info(f"Simulation count: {count} records")
         
@@ -171,7 +215,7 @@ async def get_simulation_count(request: SimulationRequest):
 @app.post("/predict-next")
 async def predict_next(request: SimulationRequest):
     """Get the next prediction for the simulation"""
-    global trained_model, simulation_data
+    global trained_model, simulation_data, simulation_index
     
     try:
         if trained_model is None:
@@ -179,13 +223,55 @@ async def predict_next(request: SimulationRequest):
         
         logger.info(f"Getting next prediction for simulation period: {request.simulationPeriod.start} to {request.simulationPeriod.end}")
         
-        # For demo purposes, generate a synthetic prediction
-        # In real implementation, you would get the next record from your dataset service
-        
-        # Generate random sensor values
-        temperature = np.random.normal(25, 5)  # Mean 25°C, std 5°C
-        pressure = np.random.normal(1013, 10)  # Mean 1013 hPa, std 10 hPa
-        humidity = np.random.normal(50, 15)    # Mean 50%, std 15%
+        # Check if real simulation data is provided
+        if hasattr(request, 'simulationData') and request.simulationData and len(request.simulationData) > 0:
+            # Use real simulation data
+            if simulation_data is None or len(simulation_data) != len(request.simulationData):
+                # Process and store simulation data
+                simulation_data = pd.DataFrame(request.simulationData)
+                # Standardize column names
+                column_mapping = {}
+                for col in simulation_data.columns:
+                    col_lower = col.lower()
+                    if 'temperature' in col_lower or 'temp' in col_lower:
+                        column_mapping[col] = 'Temperature'
+                    elif 'pressure' in col_lower:
+                        column_mapping[col] = 'Pressure'
+                    elif 'humidity' in col_lower:
+                        column_mapping[col] = 'Humidity'
+                
+                simulation_data = simulation_data.rename(columns=column_mapping)
+                simulation_index = 0  # Reset index
+                logger.info(f"Processed {len(simulation_data)} simulation records")
+            
+            # Get the next record from simulation data
+            if simulation_index >= len(simulation_data):
+                simulation_index = 0  # Wrap around to beginning
+            
+            current_record = simulation_data.iloc[simulation_index]
+            simulation_index += 1
+            
+            # Extract sensor values from the current record
+            temperature = float(current_record.get('Temperature', 25.0))
+            pressure = float(current_record.get('Pressure', 1013.0))
+            humidity = float(current_record.get('Humidity', 50.0))
+            
+            # Get actual timestamp if available
+            timestamp = current_record.get('Timestamp', current_record.get('synthetic_timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            if isinstance(timestamp, str):
+                record_timestamp = timestamp
+            else:
+                record_timestamp = str(timestamp)
+            
+            logger.info(f"Using real simulation record {simulation_index}/{len(simulation_data)}: T={temperature:.1f}, P={pressure:.1f}, H={humidity:.1f}")
+            
+        else:
+            # Fallback to synthetic data generation
+            logger.warning("No real simulation data provided, generating synthetic values")
+            temperature = np.random.normal(25, 5)  # Mean 25°C, std 5°C
+            pressure = np.random.normal(1013, 10)  # Mean 1013 hPa, std 10 hPa
+            humidity = np.random.normal(50, 15)    # Mean 50%, std 15%
+            record_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Create feature vector
         features = np.array([[temperature, pressure, humidity]])
@@ -195,14 +281,13 @@ async def predict_next(request: SimulationRequest):
         prediction = "Pass" if prediction_proba[1] > 0.5 else "Fail"
         confidence = max(prediction_proba) * 100
         
-        # Generate sample ID and timestamp
+        # Generate sample ID
         sample_id = f"SAMPLE_{uuid.uuid4().hex[:8].upper()}"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         logger.info(f"Prediction: {prediction} with {confidence:.2f}% confidence for sample {sample_id}")
         
         return PredictionResult(
-            timestamp=timestamp,
+            timestamp=record_timestamp,
             sampleId=sample_id,
             prediction=prediction,
             confidence=confidence,
@@ -214,6 +299,75 @@ async def predict_next(request: SimulationRequest):
     except Exception as e:
         logger.error(f"Error during prediction: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+def process_real_data(training_records, testing_records):
+    """Process real dataset records from the backend"""
+    logger.info("Processing real dataset records")
+    
+    # Convert list of dicts to DataFrames
+    training_df = pd.DataFrame(training_records)
+    testing_df = pd.DataFrame(testing_records)
+    
+    # Standardize column names (handle case-insensitive matching)
+    def standardize_column_names(df):
+        # Create a mapping for common variations
+        column_mapping = {}
+        for col in df.columns:
+            col_lower = col.lower()
+            if 'response' in col_lower:
+                column_mapping[col] = 'Response'
+            elif 'temperature' in col_lower or 'temp' in col_lower:
+                column_mapping[col] = 'Temperature'
+            elif 'pressure' in col_lower:
+                column_mapping[col] = 'Pressure'
+            elif 'humidity' in col_lower:
+                column_mapping[col] = 'Humidity'
+            # Keep timestamp columns as-is for now
+        
+        return df.rename(columns=column_mapping)
+    
+    training_df = standardize_column_names(training_df)
+    testing_df = standardize_column_names(testing_df)
+    
+    logger.info(f"Training data columns: {list(training_df.columns)}")
+    logger.info(f"Testing data columns: {list(testing_df.columns)}")
+    
+    # Ensure Response column exists and is properly formatted
+    if 'Response' not in training_df.columns:
+        logger.error("Response column not found in training data")
+        raise ValueError("Response column is required for training")
+    
+    # Convert Response to binary if needed
+    training_df['Response'] = training_df['Response'].astype(int)
+    testing_df['Response'] = testing_df['Response'].astype(int)
+    
+    # Identify feature columns (exclude response and timestamp columns)
+    exclude_cols = ['Response', 'timestamp', 'synthetic_timestamp']
+    potential_features = [col for col in training_df.columns if col not in exclude_cols]
+    
+    # Filter to numeric columns only
+    numeric_features = []
+    for col in potential_features:
+        try:
+            training_df[col] = pd.to_numeric(training_df[col], errors='coerce')
+            testing_df[col] = pd.to_numeric(testing_df[col], errors='coerce')
+            if not training_df[col].isna().all():  # Column has some numeric values
+                numeric_features.append(col)
+        except:
+            logger.warning(f"Skipping non-numeric column: {col}")
+    
+    if not numeric_features:
+        logger.error("No numeric feature columns found")
+        raise ValueError("At least one numeric feature column is required")
+    
+    logger.info(f"Using feature columns: {numeric_features}")
+    
+    # Handle missing values
+    for col in numeric_features:
+        training_df[col] = training_df[col].fillna(training_df[col].median())
+        testing_df[col] = testing_df[col].fillna(testing_df[col].median())
+    
+    return training_df, testing_df, numeric_features
 
 def generate_synthetic_data():
     """Generate synthetic training and testing data for demonstration"""
