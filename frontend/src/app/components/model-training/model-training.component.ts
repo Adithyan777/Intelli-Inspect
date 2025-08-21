@@ -4,7 +4,34 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { HttpClientModule } from '@angular/common/http';
 
-import { Chart, ChartConfiguration, ChartType } from 'chart.js';
+import { 
+  Chart, 
+  ChartConfiguration, 
+  ChartType,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  LineController,
+  DoughnutController,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  LineController,
+  DoughnutController,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface TrainingMetrics {
   accuracy: number;
