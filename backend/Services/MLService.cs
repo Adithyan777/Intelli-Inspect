@@ -36,16 +36,37 @@ public class MLService : IMLService
                 ((IDictionary<string, object>)record).ToDictionary(kv => kv.Key, kv => kv.Value)
             ).ToList();
             
+            // Determine data strategy based on available data
+            string dataStrategy = "auto";
+            bool useSyntheticData = false;
+            
+            if (trainingData.Count > 0 && testingData.Count == 0)
+            {
+                // Training data available but no testing data - use synthetic for consistent evaluation
+                _logger.LogInformation("No testing data available, switching to synthetic data strategy");
+                dataStrategy = "synthetic";
+                useSyntheticData = true;
+            }
+            else if (trainingData.Count == 0)
+            {
+                // No training data - use synthetic
+                _logger.LogInformation("No training data available, using synthetic data");
+                dataStrategy = "synthetic";
+                useSyntheticData = true;
+            }
+            
             // Create the enhanced training request with actual data
             var enhancedRequest = new TrainingRequest
             {
                 TrainingPeriod = request.TrainingPeriod,
                 TestingPeriod = request.TestingPeriod,
                 TrainingData = trainingData,
-                TestingData = testingData
+                TestingData = testingData,
+                DataStrategy = dataStrategy,
+                UseSyntheticData = useSyntheticData
             };
             
-            _logger.LogInformation($"Sending training request with {trainingData.Count} training records and {testingData.Count} testing records");
+            _logger.LogInformation($"Sending training request with {trainingData.Count} training records, {testingData.Count} testing records, strategy: {dataStrategy}");
             
             var json = JsonSerializer.Serialize(enhancedRequest);
             var content = new StringContent(json, Encoding.UTF8, "application/json");

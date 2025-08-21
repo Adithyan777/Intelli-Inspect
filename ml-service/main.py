@@ -53,6 +53,8 @@ class TrainingRequest(BaseModel):
     testingPeriod: DateRange
     trainingData: Optional[List[dict]] = []
     testingData: Optional[List[dict]] = []
+    useSyntheticData: Optional[bool] = False  # Force synthetic data usage
+    dataStrategy: Optional[str] = "auto"  # "auto", "synthetic", "real_only", "mixed"
 
 class TrainingMetrics(BaseModel):
     accuracy: float
@@ -101,24 +103,70 @@ async def train_model(request: TrainingRequest):
         if hasattr(request, 'testingData'):
             logger.info(f"  - testingData length: {len(request.testingData) if request.testingData else 0}")
         
-        # Check if real data is provided
-        if hasattr(request, 'trainingData') and hasattr(request, 'testingData') and request.trainingData and len(request.trainingData) > 0:
-            # We have training data, check if we also have testing data
-            if request.testingData and len(request.testingData) > 0:
-                logger.info(f"Using real dataset - Training records: {len(request.trainingData)}, Testing records: {len(request.testingData)}")
-                training_data, testing_data, feature_columns = process_real_data(request.trainingData, request.testingData)
-            else:
-                logger.info(f"Using real training data ({len(request.trainingData)} records) and splitting for testing since no separate testing data provided")
-                # Use training data for both, then split it
-                training_data_full, _, feature_columns = process_real_data(request.trainingData, request.trainingData)
-                # Split the training data into train/test
-                from sklearn.model_selection import train_test_split
-                training_data, testing_data = train_test_split(training_data_full, test_size=0.3, random_state=42, stratify=training_data_full['Response'])
-        else:
-            logger.warning("No real data provided, falling back to synthetic data generation")
-            # For demo purposes, we'll generate synthetic data
-            # In a real implementation, you would load data from your dataset service
+        # Determine data strategy
+        data_strategy = getattr(request, 'dataStrategy', 'auto')
+        use_synthetic = getattr(request, 'useSyntheticData', False)
+        
+        logger.info(f"Data strategy: {data_strategy}, Force synthetic: {use_synthetic}")
+        
+        # Handle different data strategies
+        if use_synthetic or data_strategy == "synthetic":
+            # Force synthetic data usage
+            logger.info("Using synthetic data (forced by request parameters)")
             training_data, testing_data, feature_columns = generate_synthetic_data()
+            
+        elif data_strategy == "real_only":
+            # Only use real data, fail if not available
+            if not (hasattr(request, 'trainingData') and request.trainingData and len(request.trainingData) > 0):
+                raise ValueError("Real training data required but not provided")
+            if not (hasattr(request, 'testingData') and request.testingData and len(request.testingData) > 0):
+                raise ValueError("Real testing data required but not provided")
+            
+            logger.info(f"Using real data only - Training: {len(request.trainingData)}, Testing: {len(request.testingData)}")
+            training_data, testing_data, feature_columns = process_real_data(request.trainingData, request.testingData)
+            
+        elif data_strategy == "mixed":
+            # Use real training data with synthetic testing data if testing data is missing
+            if hasattr(request, 'trainingData') and request.trainingData and len(request.trainingData) > 0:
+                if hasattr(request, 'testingData') and request.testingData and len(request.testingData) > 0:
+                    # Both available - use real data
+                    logger.info(f"Using real data - Training: {len(request.trainingData)}, Testing: {len(request.testingData)}")
+                    training_data, testing_data, feature_columns = process_real_data(request.trainingData, request.testingData)
+                else:
+                    # Only training data available - use real training with synthetic testing
+                    logger.info(f"Mixed approach: Real training data ({len(request.trainingData)} records) with synthetic testing data")
+                    real_training_data, _, real_feature_columns = process_real_data(request.trainingData, request.trainingData)
+                    synthetic_training_data, synthetic_testing_data, synthetic_feature_columns = generate_synthetic_data()
+                    
+                    # Use real training data and synthetic testing data
+                    training_data = real_training_data
+                    testing_data = synthetic_testing_data
+                    feature_columns = real_feature_columns  # Use feature columns from real data
+            else:
+                # No real data - fall back to synthetic
+                logger.info("Mixed approach: No real data available, using synthetic data")
+                training_data, testing_data, feature_columns = generate_synthetic_data()
+                
+        else:
+            # Auto strategy (default behavior)
+            if hasattr(request, 'trainingData') and request.trainingData and len(request.trainingData) > 0:
+                # We have training data
+                if hasattr(request, 'testingData') and request.testingData and len(request.testingData) > 0:
+                    # Case 1: Both training and testing data provided - use real data
+                    logger.info(f"Auto: Using real dataset - Training records: {len(request.trainingData)}, Testing records: {len(request.testingData)}")
+                    try:
+                        training_data, testing_data, feature_columns = process_real_data(request.trainingData, request.testingData)
+                    except Exception as e:
+                        logger.warning(f"Auto: Error processing real data: {str(e)}. Falling back to synthetic data.")
+                        training_data, testing_data, feature_columns = generate_synthetic_data()
+                else:
+                    # Case 2: Only training data provided, no testing data - use synthetic data
+                    logger.info(f"Auto: Only training data provided ({len(request.trainingData)} records), no testing data. Using synthetic data for consistent evaluation.")
+                    training_data, testing_data, feature_columns = generate_synthetic_data()
+            else:
+                # Case 3: No real data provided - use synthetic data
+                logger.info("Auto: No real data provided, using synthetic data generation")
+                training_data, testing_data, feature_columns = generate_synthetic_data()
         
         # Prepare features and target
         X_train = training_data[feature_columns]

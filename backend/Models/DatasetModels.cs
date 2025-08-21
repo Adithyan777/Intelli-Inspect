@@ -63,6 +63,12 @@ public class TrainingRequest
     
     [JsonPropertyName("testingData")]
     public List<Dictionary<string, object>> TestingData { get; set; } = new();
+    
+    [JsonPropertyName("useSyntheticData")]
+    public bool UseSyntheticData { get; set; } = false;
+    
+    [JsonPropertyName("dataStrategy")]
+    public string DataStrategy { get; set; } = "auto";
 }
 
 public class TrainingMetrics
